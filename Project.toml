@@ -7,9 +7,10 @@ version = "0.0.1"
 Cairo = "159f3aea-2a34-519c-b102-8c37f9878175"
 Luxor = "ae8d54c2-7ccd-5906-9d76-62fc9837b5bc"
 Pango_jll = "36c8627f-9965-5494-a995-c6b170f724f3"
+ThreadPools = "b189fb0b-2eb5-4ed4-bc0c-d34c51242431"
 
 [compat]
-julia = "1.8"
+julia = "1.9"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
