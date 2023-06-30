@@ -1,7 +1,12 @@
 name = "LuxorLayout"
 uuid = "909dfbbc-cb73-418e-9556-eed3773b40ca"
 authors = ["hustf <hustf@users.noreply.github.com> and contributors"]
-version = "1.0.0-DEV"
+version = "0.0.1"
+
+[deps]
+Cairo = "159f3aea-2a34-519c-b102-8c37f9878175"
+Luxor = "ae8d54c2-7ccd-5906-9d76-62fc9837b5bc"
+Pango_jll = "36c8627f-9965-5494-a995-c6b170f724f3"
 
 [compat]
 julia = "1.8"
