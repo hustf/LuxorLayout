@@ -54,7 +54,10 @@ We like the mental model of 'Model space' and 'Paper space'. It comes from AutoC
 |Cairo        |Surface              |Device space     |
 |             |Destination          |Source           |
 
-There is also the concept of 'user space'. We are not sure if this would fit best in a third column, or think of it as 'paper space'. It's complicated.
+We should add all kinds of caveats here, mainly: 
+
+    -'Source' and 'Destination' is used to describe other relations. 
+    -'User space' begs for a mention here. But no!
 
   ### Public interface
 
@@ -65,12 +68,14 @@ See inline documentation for more.
 
     * margins_get
     * margins_set
+    * Margins
 
  2. Inkextent
     * encompass
     * inkextent_user_with_margin
     * inkextent_reset
     * inkextent_user_get
+    * inkextent_device_get
     * point_device_get
     * point_user_get
 
@@ -92,8 +97,8 @@ See inline documentation for more.
  5. Utilities for user and debugging
 
      * mark_inkextent
+     * mark_cs
      * rotation_device_get
-
 
 </details>
 

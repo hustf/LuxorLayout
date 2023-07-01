@@ -1,12 +1,34 @@
 module LuxorLayout
 import ThreadPools, Luxor, Cairo
 using ThreadPools: @tspawnat
-using Luxor: BoundingBox, Point, @layer
+using Luxor: BoundingBox, Point, @layer, Drawing, O, snapshot
+using Luxor: origin, finish, currentdrawing
+using Luxor: setopacity, sethue, setcolor, setfont, settext
+using Luxor: setline, setdash, setlinecap
+using Luxor: circle, line, label, box
+using Luxor: _get_current_cr, user_to_device!, device_to_user!
+using Luxor: boxwidth, boxheight, readsvg, placeimage, readpng
+import Base: *, show
+
+# 1. Margins and limiting width or height
+export margins_get, margins_set, Margins
+
+# 2. Inkextent
+export  encompass, inkextent_user_with_margin, inkextent_reset
+export inkextent_user_get, inkextent_device_get
+export point_device_get, point_user_get
+
+# 3. Overlay file
+# 4. Snap
+export snap, countimage_setvalue
+
+#5. Utilities for user and debugging
+export  mark_inkextent, mark_cs, rotation_device_get
 
 ########################################
 # 1 Margins and limiting width or height
 #
-# margins_get, margins_set, Margins, 
+# margins_get, margins_set, Margins,
 # scale_limiting_get,
 # LIMITING_WIDTH[], LIMITING_HEIGHT[]
 ########################################
@@ -54,10 +76,10 @@ LIMITING_... serves a different purpose from
 Drawing.width and Drawing.height.
 
 Output files are limited by both,
-so that no limit is exceeded, and aspect ratio 
+so that no limit is exceeded, and aspect ratio
 is preserved.
 
-For example, an image with tall 'inkextent' 
+For example, an image with tall 'inkextent'
 will be limited by LIMITED_HEIGHT.
 """
 const LIMITING_WIDTH::Ref{Int64} = 800
@@ -69,12 +91,12 @@ const LIMITING_HEIGHT::Ref{Int64} = 800
 
 Scaling factor from user space to output.
 This recursive function finds the scaling factor
-which fits the ink extents plus outside margins into 
+which fits the ink extents plus outside margins into
 LIMITING_WIDTH[], LIMITING_HEIGHT[].
 """
 function scale_limiting_get(;s0 = 1)
     m = margins_get()
-    dw = LIMITING_WIDTH[] 
+    dw = LIMITING_WIDTH[]
     dh = LIMITING_HEIGHT[]
     iu = inkextent_user_get()
     uw = boxwidth(iu) + (m.l + m.r) / s0
@@ -92,8 +114,8 @@ end
 #########################################
 # 2 Inkextent
 #   encompass, inkextent_user_with_margin
-#   inkextent_reset, inkextent_user_get, 
-#   inkextent_set, inkextent_device_get, 
+#   inkextent_reset, inkextent_user_get,
+#   inkextent_set, inkextent_device_get,
 #   point_device_get, point_user_get
 #########################################
 
@@ -177,7 +199,7 @@ end
     inkextent_user_with_margin()
     -> BoundingBox
 
-    Consider INK_EXTENT and margins scaled from LIMITING_..., 
+    Consider INK_EXTENT and margins scaled from LIMITING_...,
 mapped to the user / current coordinate system.
 """
 function inkextent_user_with_margin()
@@ -197,7 +219,7 @@ end
     encompass(point)
     encompass(pts)
 
-Update inkextents to also include point or pts. 
+Update inkextents to also include point or pts.
 Pts may be a Vector, Tuple or other containers of points.
 """
 encompass(pt::Point; c = _get_current_cr()) = inkextent_extend(pt; c)
@@ -214,7 +236,7 @@ end
    point_device_get(pt; c = _get_current_cr())
 
 `getworldposition`, but works for limitless surfaces too.
-Map from user to device coordinuser_pointates. Related to 'getworldposition', 
+Map from user to device coordinuser_pointates. Related to 'getworldposition',
 'getmatrix', 'juliatocairomatrix', 'cairotojuliamatrix'.
 
 # Argument
@@ -252,11 +274,11 @@ end
 ##################################
 # 3 Overlay file
 #    This is normally run in a second
-#    thread with a separate Cairo 
+#    thread with a separate Cairo
 #    instance.
 #
 #   byte_description, overlay_file,
-#   assert_second_thread, 
+#   assert_second_thread,
 #   assert_file_exists
 ##################################
 const LIMIT_fsize_read_svg = 13705152
@@ -357,7 +379,7 @@ end
 """
 function assert_second_thread()
     if Threads.nthreads() == 1
-        printstyled("Creating overlay with one thread => The drawing in memory (if any) is overwritten.\n", color=:yellow) 
+        printstyled("Creating overlay with one thread => The drawing in memory (if any) is overwritten.\n", color=:yellow)
     end
     if Threads.threadid() == 1
         printstyled("Creating overlay while threadid() == 1 is unexpected. \nNormal usage is `@tspawnat 2 overlay_file(...)`.\n", color=:yellow)
@@ -451,15 +473,15 @@ function snap(f_overlay::Function, cb::BoundingBox, scalefactor::Float64; fkwds.
     @assert res isa Luxor.SVGimage
     if res.width == 1.0 && res.height == 1.0
         println()
-        @warn("After adding overlay, the file $fsvg has width 1.0 and height 1.0 and may be corrupted. 
-              Rendering this as a .png might cause crashes. 
+        @warn("After adding overlay, the file $fsvg has width 1.0 and height 1.0 and may be corrupted.
+              Rendering this as a .png might cause crashes.
               .png output is dropped, and the corrupt svg image is returned instead.
               Examine $fsvg to find out why!")
         return res
     end
     fpng = "$(COUNTIMAGE.value).png"
     # Crashes experienced during Cairo.paint() within the following call
-    # to snapshot as png. 
+    # to snapshot as png.
     # We have no definite criterion, but we have this complicated process:
     w = round(boxwidth(cb))
     h = round(boxheight(cb))
@@ -472,7 +494,7 @@ function snap(f_overlay::Function, cb::BoundingBox, scalefactor::Float64; fkwds.
         return res
     elseif w * h > LIMIT_pixel_area_soft
         println()
-        @warn("Rendering this as $fpng may allocate too much memory. 
+        @warn("Rendering this as $fpng may allocate too much memory.
                 Crop box width is $w, height $h, w·h = $(w * h) < limit $LIMIT_pixel_area.
                 Scaled width is $ws, height $hs, ws·hs = $(ws * hs)
                 We may try anyway, good luck!")
@@ -481,7 +503,7 @@ function snap(f_overlay::Function, cb::BoundingBox, scalefactor::Float64; fkwds.
         println()
         @warn("Rendering this as $fpng exceeds limits for crop box.
               w = $w > $LIMIT_pixel_render_to_png  || h = $h > $LIMIT_pixel_render_to_png
-              ws = $ws          hs = $hs 
+              ws = $ws          hs = $hs
              We try anyway, good luck!")
     end
     if filesize(fsvg) > LIMIT_fsize_render_to_png && w * h > LIMIT_pixel_area_soft
@@ -489,7 +511,7 @@ function snap(f_overlay::Function, cb::BoundingBox, scalefactor::Float64; fkwds.
              .png output is dropped, and the svg image is returned instead.")
         return res
     end
-    printstyled("\t filesize($fsvg) = $(filesize(fsvg)/1000)kB\n", color=:grey)
+    @debug "\t filesize($fsvg) = $(filesize(fsvg)/1000)kB\n"
     snapshot(fpng, cb, scalefactor)
     assert_file_exists(fpng)
     tsk = @tspawnat 2 overlay_file(f_overlay, fpng; fkwds...)
@@ -506,7 +528,7 @@ end
 snap() = snap( () -> nothing, inkextent_user_with_margin(), scale_limiting_get())
 
 """
-    text_on_overlay(txt; 
+    text_on_overlay(txt;
                     color ="black",
                     fs = 24,
                     family= "Sans",
@@ -523,7 +545,7 @@ and font configuration is independent.
 Tweaking through keyword arguments, but
 writing your own version may be easier.
 """
-function text_on_overlay(txt; 
+function text_on_overlay(txt;
                         color ="black",
                         fs = 24,
                         family= "Sans",
@@ -547,8 +569,8 @@ end
 
 ##########################################
 # 5 Utilities for user and debugging below
-#   distance_to_device_origin_get, 
-#   mark_inkextent, mark_cs, 
+#   distance_to_device_origin_get,
+#   mark_inkextent, mark_cs,
 #   rotation_device_get
 ##########################################
 """
@@ -603,9 +625,9 @@ Assuming no shear transformation is applied, how much is
 user space currently rotated with regards to device space?
 
 Sign:
-  - x is right 
+  - x is right
   - y is down
-  - z is in 
+  - z is in
   => positive angle is clockwise
 
 NOTE: Cairo is not always updated after calling rotate(). This is experimental.
