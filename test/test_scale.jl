@@ -6,15 +6,14 @@ using Luxor: Drawing, Point, O, BoundingBox, rotate, translate, scale
 using Luxor: boxwidth, boxheight, background, blend
 using Luxor: setblend, paint, setcolor, setopacity, sethue
 using Luxor: dimension, text, rect, circle
-# TODO check another way, or reset..
-#@isdefined(LuxorLayout) && throw("This test file relies on inital state at loading.")
+
 # We have some old images we won't overwrite. Start after:
 countimage_setvalue(49)
 @testset "Viewport extension without work (user)-space scaling. Pic. 50-52" begin
     Drawing(NaN, NaN, :rec)
     # Margins are set in 'output' points.
     # They are scaled to user coordinates where needed.
-    m = margins_set(Margins())
+    m = margin_set(Margin())
     t1, b1, l1, r1 = m.t, m.b, m.l, m.r
     inkextent_reset()
     s1 = scale_limiting_get()
@@ -44,7 +43,7 @@ countimage_setvalue(49)
     # Increasing (the left) margin by 100 expands inwards
     # (possibly changing the scale to fit inkextent), not outwards
     # (the output image will not grow larger)
-    margins_set(;l = 32 + 100)
+    margin_set(;l = 32 + 100)
     bb3 = inkextent_user_get()
     s3 = scale_limiting_get() 
     @test boxwidth(bb2) == boxwidth(bb3)
@@ -76,7 +75,7 @@ end
 @testset "User / work -space to device space: Zooming out. No pic." begin
     Drawing(NaN, NaN, :rec)
     inkextent_reset()
-    margins_set(Margins())
+    margin_set(Margin())
     bbo = inkextent_user_get()
     @test all(inkextent_device_get() .== bbo)
     #
@@ -95,7 +94,7 @@ end
 
 @testset "User to device space: Zooming in. Pic. 53-54" begin
     Drawing(NaN, NaN, :rec)
-    margins_set(Margins())
+    margin_set(Margin())
     inkextent_reset()
     background("chocolate")
     bbo = inkextent_user_get()
@@ -142,7 +141,7 @@ end
 
 @testset "Rotation. Pic. 56" begin
     Drawing(NaN, NaN, :rec)
-    margins_set(Margins())
+    margin_set(Margin())
     inkextent_reset()
     background("blanchedalmond")
     ubb = inkextent_user_get()
@@ -204,13 +203,13 @@ end
     LIMITING_HEIGHT[] = 300
     Drawing(NaN, NaN, :rec)
     inkextent_reset()
-    margins_set(Margins())
+    margin_set(Margin())
     w = boxwidth(inkextent_user_get())
     h = boxheight(inkextent_user_get())
     @test w == 336
     @test h == 252
-    @test w + margins_get().l + margins_get().r == 400  
-    @test h + margins_get().t + margins_get().b == 300
+    @test w + margin_get().l + margin_get().r == 400  
+    @test h + margin_get().t + margin_get().b == 300
     # We're making a special kind of background here...
     # .svg output is post-processed as normal.
     orangered = blend(Point(-150, 0), Point(150, 0), "orange", "darkred")

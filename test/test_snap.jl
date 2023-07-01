@@ -6,9 +6,8 @@ using Luxor: O, brush, translate, rotate
 using Luxor: midpoint, snapshot
 using LuxorLayout: scale_limiting_get # Consider: do we have something more useful in public api?
 
-# We have some other images we won't overwrite. Start after:
+# We have some other images we won't write over. Start after:
 countimage_setvalue(19)
-
 
 "Noone likes decimal points"
 roundpt(pt) = Point(round(pt.x), round(pt.y))

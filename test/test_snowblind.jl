@@ -4,16 +4,22 @@ using Test
 # import Pkg; Pkg.test("LuxorLayout")
 using QuadGK
 using LuxorLayout
+using LuxorLayout: scale_limiting_get, inkextent_set # Not public. Consider.
+using LuxorLayout: LIMITING_WIDTH, LIMITING_HEIGHT   # Not public. Consider.
+using LuxorLayout: scale_limiting_get # Not public. Consider.
 import Luxor
-using Luxor: Path, PathClose
+using Luxor: Drawing, O, BoundingBox, Point, snapshot
+using Luxor: Path, PathClose, _get_current_cr, @layer
+using Luxor: background, box, blend, boxwidth, fontsize
+using Luxor: setcolor, setopacity, setline, setblend, sethue
+using Luxor: translate, rotate, midpoint, textoutlines
+using Luxor: newpath, storepath, drawpath
+using Luxor: squircle, circle, dimension
+
 # TODO check another way, or reset..
 #@isdefined(LuxorLayout) && throw("This test file relies on inital state at loading.")
-#using .LuxorLayout: margins_set, Margins, scale_limiting_get
-#using .LuxorLayout: encompass, inkextent_set, inkextent_reset, 
-#    inkextent_user_with_margin, point_device_get, point_user_get
-#using .LuxorLayout: snap, countimage_setvalue, text_on_overlay
-#using .LuxorLayout: mark_inkextent, distance_to_device_origin_get
-# We have some old images we won't overwrite. Start after:
+
+# We have some other images we won't write over. Start after:
 countimage_setvalue(99)
 
 "A storage for pathified text since font scaling is hard"
@@ -44,17 +50,33 @@ include("drawingfuncs_snowblind.jl")
 # 100
 #####
 Drawing(NaN, NaN, :rec)
+# Default margins and inkextent for scale 1:1
+margin_set()
+inkextent_reset()
+
+
 # Some checks against the current state; unfortunately,
 # there is no 'reset' of LuxorLayout variables
 # that are run whenever starting a new drawing
-@assert LuxorLayout.LIMITING_WIDTH[] == 800
-@assert LuxorLayout.LIMITING_HEIGHT[] == 800
-@assert all(LuxorLayout.inkextent_user_get() .== BoundingBox(O + (-368, -376), O +(368, 376)))
-@assert scale_limiting_get() == 1.0
+
+@test LIMITING_WIDTH[] == 800
+@test LIMITING_HEIGHT[] == 800
+@test begin
+    tbo = BoundingBox(O + (-368, -376), O +(368, 376))
+    if all(inkextent_user_get() .== tbo)
+        true
+    else
+        @warn inkextent_user_get()
+
+        false
+    end
+end
+
+@test scale_limiting_get() == 1.0
 background("snow1")
-# In this first image, we're going to zoom in when making an image.
-# If we were using inkextent_reset(), that would set us up for a larger
-# area than intended.
+# In this first image, we're going to zoom in.
+# The default ink_extent is too large.
+
 inkextent_set(BoundingBox(Point(-190, -170), Point(360, 50)))
 p, θₑ = trail_next_length(150, 0, 0, 0)
 translate(p)
@@ -121,7 +143,7 @@ p, θₑ = trail_next_length(283, 0, 0.00095, 0)
 translate(p)
 rotate(-θₑ)
 # Increase default margin, lest the skis poke out
-margins_set(;r = 200)
+margin_set(;r = 200)
 outscale = scale_limiting_get()
 cb = inkextent_user_with_margin()
 pt = (O - midpoint(cb)) * outscale
@@ -139,7 +161,7 @@ snap(sn_overlay, cb, outscale; pt, scale = outscale, txt)
 # 103
 #####
 # Revert to default margins
-margins_set(Margins())
+margin_set(Margin())
 inkextent_reset() # Back to scale 1:1 for 800x800 pixels
 θ´max = 0.00095
 p, θₑ = trail_next_length(6000, 0, θ´max, 0)

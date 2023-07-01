@@ -3,13 +3,13 @@ ENV["JULIA_DEBUG"] = "LuxorLayout"
 
 function run_all_tests()
     @testset "snap" begin
-    #    include("test_snap.jl")
+        include("test_snap.jl")
     end
     @testset "scale" begin
-    #    include("test_scale.jl")
+        include("test_scale.jl")
     end
     @testset "long paths" begin
-    #    include("test_long_svg_paths.jl")
+        include("test_long_svg_paths.jl")
     end
     @testset "snowblind" begin
         include("test_snowblind.jl")

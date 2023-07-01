@@ -11,7 +11,7 @@ using Luxor: boxwidth, boxheight, readsvg, placeimage, readpng
 import Base: *, show
 
 # 1. Margins and limiting width or height
-export margins_get, margins_set, Margins
+export margin_get, margin_set, Margin
 
 # 2. Inkextent
 export  encompass, inkextent_user_with_margin, inkextent_reset
@@ -19,53 +19,56 @@ export inkextent_user_get, inkextent_device_get
 export point_device_get, point_user_get
 
 # 3. Overlay file
+export text_on_overlay
+
 # 4. Snap
 export snap, countimage_setvalue
 
 #5. Utilities for user and debugging
-export  mark_inkextent, mark_cs, rotation_device_get
+export mark_inkextent, mark_cs
+export rotation_device_get, distance_to_device_origin_get
 
 ########################################
 # 1 Margins and limiting width or height
 #
-# margins_get, margins_set, Margins,
+# margin_get, margin_set, Margin,
 # scale_limiting_get,
 # LIMITING_WIDTH[], LIMITING_HEIGHT[]
 ########################################
 
-"Ref. `margins_set`"
-mutable struct Margins
+"Ref. `margin_set`"
+mutable struct Margin
     t::Int64
     b::Int64
     l::Int64
     r::Int64
 end
-Margins() = Margins(24, 24, 32, 32)
-show(io::IO, ::MIME"text/plain", m::Margins) = print(io, "Margins(t = $(m.t), b = $(m.b), l = $(m.l), r = $(m.r))")
-function *(m::Margins, x)
+Margin() = Margin(24, 24, 32, 32)
+show(io::IO, ::MIME"text/plain", m::Margin) = print(io, "Margin(t = $(m.t), b = $(m.b), l = $(m.l), r = $(m.r))")
+function *(m::Margin, x)
     t, b, l, r = m.t, m.b, m.l, m.r
-    Margins(round(t * x), round(b * x), round(l * x), round(r * x))
+    Margin(round(t * x), round(b * x), round(l * x), round(r * x))
 end
 
-"Ref. `margins_set`"
-const MARGINS::Ref{Margins} = Margins()
+"Ref. `margin_set`"
+const MARGINS::Ref{Margin} = Margin()
 "Ref. `set-margins`"
-margins_get() = MARGINS[]
+margin_get() = MARGINS[]
 
 
 """
-    margins_set(m::Margins)
-    margins_set(;t = margins_get().t, b = margins_get().b, l = margins_get().l, r = margins_get().r)
+    margin_set(m::Margin)
+    margin_set(;t = margin_get().t, b = margin_get().b, l = margin_get().l, r = margin_get().r)
 
-Margins here merge the .css terms 'margin', 'border' and 'padding'.
+Margin here merge the .css terms 'margin', 'border' and 'padding'.
 
-Margins are set as unscaled. They are scaled as needed. If m = margins_get(), then
+Margins are set as unscaled. They are scaled as needed. If m = margin_get(), then
     content height = LIMITING_HEIGHT[] - m.t - m.b
     content width = LIMITING_WIDTH[] - m.l - m.r
 """
-margins_set(m::Margins) = begin;MARGINS[] = m;end
-function margins_set(;t = margins_get().t, b = margins_get().b, l = margins_get().l, r = margins_get().r)
-    margins_set(Margins(t, b, l, r))
+margin_set(m::Margin) = begin;MARGINS[] = m;end
+function margin_set(;t = margin_get().t, b = margin_get().b, l = margin_get().l, r = margin_get().r)
+    margin_set(Margin(t, b, l, r))
 end
 
 # TODO: If LIMITING_... is a keeper,
@@ -95,7 +98,7 @@ which fits the ink extents plus outside margins into
 LIMITING_WIDTH[], LIMITING_HEIGHT[].
 """
 function scale_limiting_get(;s0 = 1)
-    m = margins_get()
+    m = margin_get()
     dw = LIMITING_WIDTH[]
     dh = LIMITING_HEIGHT[]
     iu = inkextent_user_get()
@@ -125,7 +128,7 @@ end
 Default drawing width, height minus current margins.
 """
 function inkextent_default()
-    m = margins_get()
+    m = margin_get()
     tl = Point(-LIMITING_WIDTH[] / 2, -LIMITING_HEIGHT[] / 2)
     br = -tl
     # Subtract margins, default scale is 1.0.
@@ -205,7 +208,7 @@ mapped to the user / current coordinate system.
 function inkextent_user_with_margin()
     ie = inkextent_user_get()
     s = scale_limiting_get()
-    sm = margins_get() * (1 / s)
+    sm = margin_get() * (1 / s)
     tl = ie.corner1 + (-sm.l, -sm.t)
     br = ie.corner2 + (sm.r, sm.b)
     BoundingBox(tl, br)

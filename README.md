@@ -64,11 +64,11 @@ We should add all kinds of caveats here, mainly:
 See inline documentation for more.
 <details>
 
- 1. Margins and limiting width or height
+ 1. Margin and limiting width or height
 
-    * margins_get
-    * margins_set
-    * Margins
+    * margin_get
+    * margin_set
+    * Margin
 
  2. Inkextent
     * encompass
@@ -81,7 +81,7 @@ See inline documentation for more.
 
  3. Overlay file
 
-    Internal only
+    * text_on_overlay
 
  4. Snap
 
@@ -99,6 +99,7 @@ See inline documentation for more.
      * mark_inkextent
      * mark_cs
      * rotation_device_get
+     * distance_to_device_origin_get
 
 </details>
 
@@ -110,7 +111,7 @@ See inline documentation for more.
 <details>
  1. Margins and limiting width or height
 
-    margins_get, margins_set, Margins, 
+    margin_get, margin_set, Margin, 
     scale_limiting_get,
     LIMITING_WIDTH[], LIMITING_HEIGHT[]
 
@@ -128,7 +129,8 @@ See inline documentation for more.
     This is normally run in a second thread with a separate Cairo instance.
 ```
     byte_description, overlay_file,
-    assert_second_thread, assert_file_exists
+    assert_second_thread, assert_file_exists,
+    text_on_overlay
 ```
 
  4. Snap
@@ -146,7 +148,7 @@ See inline documentation for more.
 
 ```
      mark_inkextent, mark_cs, 
-     rotation_device_get
+     rotation_device_get, distance_to_device_origin_get
 ```
 
 </details>
