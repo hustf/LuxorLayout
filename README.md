@@ -6,11 +6,16 @@ It also "fixes" Cairo's issue [#349](https://github.com/JuliaGraphics/Cairo.jl/i
 
 The package is registered in registry [M8](https://github.com/hustf/M8):
 To use:
+
 ```
-using LuxorLayout
-import Luxor
-using Luxor: circle, etc.... 
+(@v1.9) pkg> registry add https://github.com/hustf/M8
+julia> using LuxorLayout
+julia> import Luxor
+julia> using Luxor: circle, etc.... 
 ```
+
+This loads LuxorLayout's [public interface](#Public-interface).
+
 
 ## Paper space and model space
 Users are familiar with [Luxor.jl](https://github.com/JuliaGraphics/Luxor.jl), where the basic use case is how to draw pixels on a screen and save to an image file. The user threshold is low. This package separates the mental model into 'model space' and 'paper space':
