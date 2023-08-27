@@ -38,7 +38,9 @@ This packackage adds an 'overlay'. Every time we take a snapshot, i.e. project m
 ### Margin and ink extents
 <img src="resources/margin.svg" alt = "margin" style="display: inline-block; margin: 0 auto; max-width: 640px">
 
-This package also helps keep track of ink extents (the rectangle in model space in which you have drawn). It will scale ink extents to fit within paper space margins. This would otherwise be a rather tedious task, especially when rotated coordinate systems are involved.
+This package also helps keep track of ink extents (the rectangle in model space in which you have drawn). From the get-go
+
+It will scale ink extents to fit within paper space margins. This would otherwise be a rather tedious task, especially when rotated coordinate systems are involved.
 
 
 ### It can count, too
@@ -77,8 +79,9 @@ See inline documentation for more.
 
  2. Inkextent
     * encompass
-    * inkextent_user_with_margin
+    * inkextent_set
     * inkextent_reset
+    * inkextent_user_with_margin
     * inkextent_user_get
     * inkextent_device_get
     * point_device_get
@@ -157,3 +160,55 @@ See inline documentation for more.
 ```
 
 </details>
+
+
+## Default settings
+
+Some defaults are inevitable. Let's have a look:
+
+```
+julia> using Luxor, LuxorLayout; Drawing(NaN, NaN, :rec)
+ Luxor drawing: (type = :rec, width = NaN, height = NaN, location = in memory)
+
+julia> margin_get()
+Margin(t = 24, b = 24, l = 32, r = 32)
+
+julia> inkextent_user_with_margin()
+ ⤡ Point(-400.0, -400.0) : Point(400.0, 400.0)
+
+julia> inkextent_user_get()
+ ⤡ Point(-368.0, -376.0) : Point(368.0, 376.0)
+
+julia> LuxorLayout.scale_limiting_get()
+1.0
+
+julia> mark_cs(O);mark_inkextent()
+
+julia> snap()
+```
+
+<img src="resources/1.svg" alt = "1.svg" style="display: inline-block; margin: 0 auto; max-width: 640px">
+
+
+File '1.svg' is 800x800 points, '1.png' is 800x800 pixels. The transparent background is shown differently depending on where you display the file.
+
+If you draw outside of `⤡ Point(-368.0, -376.0) : Point(368.0, 376.0)`, call `encompass` with the new point and ink extents will increase. Output through `snap` remain 800x800.
+
+See the examples:
+
+*    [Snowblind](test/test_snowblind.md) Large scales, rotations, overlays pointing to model space
+*    [Scale](test/test_scale.md)
+*    [Snap](test/test_snap.md)
+*    [Long svg paths](test/test_long_svg_paths.md)
+
+## Small model spaces
+
+Model spaces smaller than 736 x 752 distance units need to reduce the default ink extents, thus (continued example):
+
+```
+julia> inkextent_set(BoundingBox(O, O + (50, 50)))
+ ⤡ Point(-10.0, -10.0) : Point(10.0, 10.0)
+
+julia> snap()
+```
+<img src="resources/2.svg" alt = "2.svg" style="display: inline-block; margin: 0 auto; max-width: 640px">

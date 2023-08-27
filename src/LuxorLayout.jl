@@ -14,7 +14,7 @@ import Base: *, show
 export margin_get, margin_set, Margin
 
 # 2. Inkextent
-export  encompass, inkextent_user_with_margin, inkextent_reset
+export encompass, inkextent_user_with_margin, inkextent_reset, inkextent_set
 export inkextent_user_get, inkextent_device_get
 export point_device_get, point_user_get
 
@@ -71,9 +71,6 @@ function margin_set(;t = margin_get().t, b = margin_get().b, l = margin_get().l,
     margin_set(Margin(t, b, l, r))
 end
 
-# TODO: If LIMITING_... is a keeper,
-# make the function ..._get, _set_, _reset.
-# Be consistent with other mutable containers.
 """
 LIMITING_... serves a different purpose from
 Drawing.width and Drawing.height.
@@ -214,9 +211,7 @@ function inkextent_user_with_margin()
     BoundingBox(tl, br)
 end
 
-function inkextent_reset()
-    INK_EXTENT[] = inkextent_default()
-end
+inkextent_reset() = inkextent_set(inkextent_default())
 
 """
     encompass(point)
