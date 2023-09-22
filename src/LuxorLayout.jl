@@ -11,7 +11,7 @@ using Luxor: boxwidth, boxheight, readsvg, placeimage, readpng
 import Base: *, show
 
 # 1. Margins and limiting width or height
-export margin_get, margin_set, Margin
+export margin_get, margin_set, Margin, scale_limiting_get
 
 # 2. Inkextent
 export encompass, inkextent_user_with_margin, inkextent_reset, inkextent_set
@@ -234,7 +234,7 @@ end
    point_device_get(pt; c = _get_current_cr())
 
 `getworldposition`, but works for limitless surfaces too.
-Map from user to device coordinuser_pointates. Related to 'getworldposition',
+Map from user to device coordinates. Related to 'getworldposition',
 'getmatrix', 'juliatocairomatrix', 'cairotojuliamatrix'.
 
 # Argument
@@ -434,6 +434,7 @@ N is a global counter, COUNTIMAGE.value.
 
 You can pass a function `f_overlay` which draws on top of the produced image files. See 'overlay_file'.
 You can also pass keyword argument to that function, for example telling it about scales and margins.
+There is an example of passing custom keywords in 'test_model_to_paper_transformation.jl'.
 
 # Example
 ```

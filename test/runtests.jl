@@ -2,6 +2,9 @@ using Test
 ENV["JULIA_DEBUG"] = "LuxorLayout"
 
 function run_all_tests()
+    @testset "model_to_paper_transformation" begin
+        include("test_model_to_paper_transformation.jl")
+    end
     @testset "snap" begin
         include("test_snap.jl")
     end
