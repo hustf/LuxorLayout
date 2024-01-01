@@ -206,11 +206,13 @@ function inkextent_user_with_margin()
     ie = inkextent_user_get()
     s = scale_limiting_get()
     sm = margin_get() * (1 / s)
-    tl = ie.corner1 + (-sm.l, -sm.t)
-    br = ie.corner2 + (sm.r, sm.b)
+    # This was incorrectly set until version 0.0.8 (giving a smaller boxheight when margins were included)
+    # tl = ie.corner1 + (-sm.l, -sm.t)
+    # br = ie.corner2 + (sm.r, sm.b)
+    tl = ie.corner1 + (-sm.l, sm.t)
+    br = ie.corner2 + (sm.r, -sm.b)
     BoundingBox(tl, br)
 end
-
 inkextent_reset() = inkextent_set(inkextent_default())
 
 """

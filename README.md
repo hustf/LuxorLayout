@@ -174,7 +174,7 @@ julia> margin_get()
 Margin(t = 24, b = 24, l = 32, r = 32)
 
 julia> inkextent_user_with_margin()
- ⤡ Point(-400.0, -400.0) : Point(400.0, 400.0)
+ ⤡ Point(-400.0, -352.0) : Point(400.0, 352.0)
 
 julia> inkextent_user_get()
  ⤡ Point(-368.0, -376.0) : Point(368.0, 376.0)
