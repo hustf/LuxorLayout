@@ -66,4 +66,5 @@ draw_P_in_new_model()
 snap(mark_P_from_overlay; 
     scale_model_to_paper = scale_limiting_get(),
     O_model = (O - midpoint(inkextent_user_with_margin())) * scale_limiting_get())
+@test true
 

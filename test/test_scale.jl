@@ -5,7 +5,7 @@ import Luxor
 using Luxor: Drawing, Point, O, BoundingBox, rotate, translate, scale
 using Luxor: boxwidth, boxheight, background, blend
 using Luxor: setblend, paint, setcolor, setopacity, sethue
-using Luxor: dimension, text, rect, circle
+using Luxor: dimension, text, rect, circle, line, origin
 
 # We have some old images we won't overwrite. Start after:
 countimage_setvalue(49)
@@ -28,7 +28,7 @@ countimage_setvalue(49)
         text("y $y", Point(0, y)) |> encompass
     end
     mark_inkextent()
-    snap("This is overlain")
+    snap("This is overlain") #50
     # Desired output with margins is either
     #   800 x   800 
     #   800 x <=800
@@ -37,7 +37,7 @@ countimage_setvalue(49)
     bb2 = inkextent_user_get()
     s2 = scale_limiting_get() 
     # svg file + png file + png in memory.
-    pic2 = snap() 
+    pic2 = snap()           #51
     @test pic2.width == 415
     @test pic2.height == 800
     # Increasing (the left) margin by 100 expands inwards
@@ -65,12 +65,10 @@ countimage_setvalue(49)
     mark_inkextent()
     s4 = scale_limiting_get()
     @test s4 < s3
-    pic3 = snap() # svg file + png file + png in memory
+    pic3 = snap() # 52 svg file + png file + png in memory
     @test pic3.height < 800
     @test pic3.width == 800
 end
-
-
 
 @testset "User / work -space to device space: Zooming out. No pic." begin
     Drawing(NaN, NaN, :rec)
@@ -117,7 +115,7 @@ end
     mark_inkextent()
     pic1 = snap("""
         User to device space: Zooming in
-        by calling `scale($sc)`.""")
+        by calling `scale($sc)`.""") #53
     # Drawing outside inkextents enlarges output too.
     pt = inkextent_user_get().corner2
     encompass(circle(pt, 50, :stroke))
@@ -189,7 +187,7 @@ end
         as well as scaled margins within 800x800 points. 
             <small>scale_limiting_get()</small> = $(round(scale_limiting_get(), digits=3))
 
-        In this case, width limits scaling. Output is 800 x 788.
+        In this case, width limits scaling. Output is 800 x 692.
     """)
     wr = boxwidth(inkextent_user_get()) / boxwidth(ubb)
     wre = cos(ad - a) / cos(ad)
@@ -230,7 +228,7 @@ end
          svg colors ≠ png colors 
     """)
     @test abs(pic1.width - 400) <= 1
-    @test abs(pic1.height - 300) <= 1
+    @test abs(pic1.height - 300) <= 1 # 204
 end
 @testset "Transform both ways - translate" begin
     Drawing(NaN, NaN, :rec)
@@ -285,7 +283,143 @@ end
     pd1 =  O + (100, 0) + cos(atan(1)) .* (100, 100)
     @test point_device_get(pu1) == pd1
     @test point_user_get(pd1) == pu1 
+    # Get rid of the current transformation (Drawing finish does not do that)
+    origin()
+    Luxor.finish()
 end
 # Don't cause harm, reset
 LIMITING_WIDTH[] = 800
 LIMITING_HEIGHT[] = 800
+
+
+@testset "Fit A4 page printable area. Pic. 58" begin
+    # The dots density we decide on is not decisive, if
+    # we are planning to print based on vector graphics.
+    # Inskape seems to have a default assumption of 96,
+    # so we can work from that. One option for printing
+    # of large images is to split an svg into page-sized
+    # rectangles with bitmap. In that case, we can decide the
+    # pixel resolution later.
+    """ ```
+    julia> dpmm = 96/inch |> mm # dots per mm, Inkscape's default
+    (480//127)mm⁻¹
+    
+    julia> (210., 297.)mm .* dpmm # Points per A4. A4 outside size is 210mm x 297mm
+    (793.7007874015748, 1122.51968503937)
+    
+    julia> (210. - 2*5, 297. - 2*5)mm .* ρ  # Printable points per A4, 5mm unprintable all sides.
+    (755.9055118110236, 1084.724409448819)
+    ```
+    # But Inkscape's printing is buggy (straight lines disappear and other issues exist).
+    # Another source of standard is PostScript, which use 72 pts/inch. Also, 595 x 842 points per A4:
+    ```
+    julia> dpmm = 72/inch |> mm
+    (360//127)mm⁻¹
+
+    julia> (210., 297.)mm .* dpmm
+    (595.275590551181, 841.8897637795275)
+    ```
+    So, this is outside dimensions. But subtracting 10mm for 'gutter' margin is
+    insignificant. We'll stick to 595x842 as a definition, and neglect 'gutter margins'.
+    """
+
+    dpmm = 360 / 127
+    # edges_mm = 5
+    #w = Int(ceil((210 - edges_mm) * dpmm)) 
+    #h = Int(ceil((297 - edges_mm) * dpmm))
+    w, h = 595, 842
+    # These can be set regardless of Drawing being activated.
+    LIMITING_WIDTH[] = w
+    LIMITING_HEIGHT[] = h
+    margin_set(;t = 0, b = 0, l =0, r = 0)
+    inkextent_reset()
+    #
+    @test boxwidth(LuxorLayout.inkextent_default()) == w
+    @test boxwidth(inkextent_user_with_margin()) == w
+    @test boxheight(inkextent_user_with_margin()) == h
+    @test scale_limiting_get() == 1.0
+    @test all(inkextent_user_get() .== inkextent_user_with_margin())
+    # Activating a Drawing doesn't change things.
+    Drawing(NaN, NaN, :rec)
+    @test boxwidth(inkextent_user_with_margin()) == w
+    @test boxheight(inkextent_user_with_margin()) == h
+    @test scale_limiting_get() == 1.0
+    @test all(inkextent_user_get() .== inkextent_user_with_margin())
+    # Let's draw something
+    background("salmon")
+    setcolor("blue")
+    bb = inkextent_user_get()
+    line(bb.corner1, bb.corner2, :stroke)
+    # Let's draw a length we can measure on prints
+    l = 150 * dpmm # 150mm converted to points
+    format = (x) -> string(Int64(round(x / dpmm))) * "mm"
+    # Horizontal
+    dimension(O + (-l / 2, l / 2), O + (l / 2 , l / 2); format, 
+        textrotation = -π/2, textgap = 20)
+    # Vertical 
+    dimension(O + (l / 2, l / 2), O + (l / 2, -l / 2); format)
+    snap("This should be a printable A4 page\n ($w x $h)pt @$(Int(round(dpmm * 25.4)))dpi") 
+    Luxor.finish()
+end
+# Don't cause harm, reset
+LIMITING_WIDTH[] = 800
+LIMITING_HEIGHT[] = 800
+
+@testset "2 A4 pages, side by side, magins, scale 2. Pic. 59" begin
+    w, h = 2 * 595, 842
+    # These can be set regardless of Drawing being activated.
+    LIMITING_WIDTH[] = w
+    LIMITING_HEIGHT[] = h
+    m = margin_set(;t = 30, b = 50, l = 70, r = 90)
+    inkextent_reset() # this means 'scale 1:1' in a way
+    #
+    @test boxwidth(LuxorLayout.inkextent_default()) + m.l + m.r == w
+    @test boxwidth(inkextent_user_with_margin()) == w
+    @test boxheight(LuxorLayout.inkextent_default()) + m.t + m.b == h
+    @test boxheight(inkextent_user_with_margin()) == h
+    @test scale_limiting_get() == 1.0
+    # Activating a Drawing doesn't change things.
+    Drawing(NaN, NaN, :rec)
+    @test boxwidth(inkextent_user_with_margin()) == w
+    @test boxheight(inkextent_user_with_margin()) == h
+    @test scale_limiting_get() == 1.0
+    bb = inkextent_user_get()
+    wu = boxwidth(bb)
+    wh = boxheight(bb)
+    @test wu + m.l + m.r == w
+    @test wh + m.t + m.b == h
+    # Let's draw something
+    background("white")
+    setcolor("blue")
+    p1, p2, p3, p4 = LuxorLayout.four_corners(bb)
+    # This increases the ink extent be a factor of 2.
+    # Model to paper scale changes to 1 / 2 = 0.5
+    pttl = 2 * p1
+    ptbr = 2 * p3
+    encompass(pttl)
+    encompass(ptbr)
+    line(pttl, ptbr, :stroke)
+    @test round(scale_limiting_get(); digits = 5) == 0.5
+    # Let's mark ink extents now... In order to visualize the margins better.
+    p1, p2, p3, p4 = LuxorLayout.four_corners(inkextent_user_get())
+    line(p1, p2, :stroke)
+    line(p2, p3, :stroke)
+    line(p3, p4, :stroke)
+    line(p4, p1, :stroke)
+    # Let's draw a length we can measure on prints.
+    dpmm = 360 / 127 # This is the scaling of the output image, or of the overlay.
+    l = 150 * dpmm # 150mm converted to points. Since the ink extents is now larger, we 
+                   # will measure 75mm on the paper output.
+    format = (x) -> string(Int64(round(x / dpmm))) * "mm in 'model space'"
+    # Horizontal
+    dimension(O + (-l / 2, l / 2), O + (l / 2 , l / 2); format, 
+        textrotation = -π/2, textgap = 20)
+    # Vertical 
+    dimension(O + (l / 2, l / 2), O + (l / 2, -l / 2); format)
+    snap("This should fit on two A4 pages, side by side\n and with margins $m \n ($w x $h)pt @$(Int(round(dpmm * 25.4)))dpi")
+    Luxor.finish()
+end
+# Don't cause harm, reset
+LIMITING_WIDTH[] = 800
+LIMITING_HEIGHT[] = 800
+margin_set(Margin(24, 24, 32, 32))

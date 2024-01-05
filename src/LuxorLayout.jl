@@ -122,14 +122,15 @@ end
 """
     inkextent_default()
     --> BoundingBox
-Default drawing width, height minus current margins.
+
+Return drawing dimensions minus current margins.
 """
 function inkextent_default()
     m = margin_get()
-    tl = Point(-LIMITING_WIDTH[] / 2, -LIMITING_HEIGHT[] / 2)
-    br = -tl
+    bl = Point(-LIMITING_WIDTH[] / 2, -LIMITING_HEIGHT[] / 2)
+    tr = -bl
     # Subtract margins, default scale is 1.0.
-    BoundingBox(tl + (m.l, m.t), br - (m.r, m.b))
+    BoundingBox(bl + (m.l, m.b), tr - (m.r, m.t))
 end
 
 # Ink extents are always stored in device ("world") coordinates.
@@ -206,13 +207,17 @@ function inkextent_user_with_margin()
     ie = inkextent_user_get()
     s = scale_limiting_get()
     sm = margin_get() * (1 / s)
-    # This was incorrectly set until version 0.0.8 (giving a smaller boxheight when margins were included)
-    # tl = ie.corner1 + (-sm.l, -sm.t)
-    # br = ie.corner2 + (sm.r, sm.b)
-    tl = ie.corner1 + (-sm.l, sm.t)
-    br = ie.corner2 + (sm.r, -sm.b)
+    tl = ie.corner1 + (-sm.l, -sm.t)
+    br = ie.corner2 + (sm.r, sm.b)
     BoundingBox(tl, br)
 end
+
+"""
+    inkextent_reset()
+    --> BoundingBox
+
+Set inkextent to default: Limiting dimensions of output image, minus current margins.
+"""
 inkextent_reset() = inkextent_set(inkextent_default())
 
 """

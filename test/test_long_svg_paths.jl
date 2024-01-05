@@ -96,3 +96,11 @@ end
 ################
 snapshot(fname = "75.png")
 snapshot(fname = "75.svg")
+
+# Clean-up. More than needed...
+LuxorLayout.LIMITING_WIDTH[]= 800
+LuxorLayout.LIMITING_HEIGHT[] = 800
+LuxorLayout.inkextent_reset()
+Luxor.origin()
+Luxor.finish()
+

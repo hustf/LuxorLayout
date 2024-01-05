@@ -4,9 +4,9 @@ using Test
 # import Pkg; Pkg.test("LuxorLayout")
 using QuadGK
 using LuxorLayout
-using LuxorLayout: scale_limiting_get, inkextent_set # Not public. Consider.
-using LuxorLayout: LIMITING_WIDTH, LIMITING_HEIGHT   # Not public. Consider.
-using LuxorLayout: scale_limiting_get # Not public. Consider.
+using LuxorLayout: inkextent_set
+using LuxorLayout: LIMITING_WIDTH, LIMITING_HEIGHT
+using LuxorLayout: scale_limiting_get, margin_get
 import Luxor
 using Luxor: Drawing, O, BoundingBox, Point, snapshot
 using Luxor: Path, PathClose, _get_current_cr, @layer
@@ -16,8 +16,10 @@ using Luxor: translate, rotate, midpoint, textoutlines
 using Luxor: newpath, storepath, drawpath
 using Luxor: squircle, circle, dimension
 
-# TODO check another way, or reset..
-#@isdefined(LuxorLayout) && throw("This test file relies on inital state at loading.")
+# A little to-be-sure clean-up
+LIMITING_WIDTH[] == 800
+LIMITING_HEIGHT[] == 800
+margin_set(Margin(24, 24, 32, 32))
 
 # We have some other images we won't write over. Start after:
 countimage_setvalue(99)
@@ -67,7 +69,6 @@ inkextent_reset()
         true
     else
         @warn inkextent_user_get()
-
         false
     end
 end
