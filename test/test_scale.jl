@@ -1,6 +1,5 @@
 using Test
 using LuxorLayout
-using LuxorLayout: LIMITING_WIDTH, LIMITING_HEIGHT, scale_limiting_get # Not public
 import Luxor
 using Luxor: Drawing, Point, O, BoundingBox, rotate, translate, scale
 using Luxor: boxwidth, boxheight, background, blend
@@ -9,6 +8,9 @@ using Luxor: dimension, text, rect, circle, line, origin
 
 # We have some old images we won't overwrite. Start after:
 countimage_setvalue(49)
+LIMITING_HEIGHT[] = 800
+LIMITING_WIDTH[] = 800
+origin()
 @testset "Viewport extension without work (user)-space scaling. Pic. 50-52" begin
     Drawing(NaN, NaN, :rec)
     # Margins are set in 'output' points.
@@ -40,9 +42,8 @@ countimage_setvalue(49)
     pic2 = snap()           #51
     @test pic2.width == 415
     @test pic2.height == 800
-    # Increasing (the left) margin by 100 expands inwards
-    # (possibly changing the scale to fit inkextent), not outwards
-    # (the output image will not grow larger)
+    # Increasing (the left) margin by 100 
+    # (the output image will grow wider, not taller. Scale is unchanged since height limits)
     margin_set(;l = 32 + 100)
     bb3 = inkextent_user_get()
     s3 = scale_limiting_get() 

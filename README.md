@@ -76,6 +76,9 @@ See inline documentation for more.
     * margin_get
     * margin_set
     * Margin
+    * scale_limiting_get
+    * LIMITING_WIDTH
+    * LIMITING_HEIGHT
 
  2. Inkextent
     * encompass
@@ -86,10 +89,12 @@ See inline documentation for more.
     * inkextent_device_get
     * point_device_get
     * point_user_get
+    
 
  3. Overlay file
 
     * text_on_overlay
+    * user_origin_in_overlay_space_get
 
  4. Snap
 
@@ -138,7 +143,7 @@ See inline documentation for more.
 ```
     byte_description, overlay_file,
     assert_second_thread, assert_file_exists,
-    text_on_overlay
+    text_on_overlay, user_origin_in_overlay_space_get
 ```
 
  4. Snap
@@ -170,11 +175,14 @@ Some defaults are inevitable. Let's have a look:
 julia> using Luxor, LuxorLayout; Drawing(NaN, NaN, :rec)
  Luxor drawing: (type = :rec, width = NaN, height = NaN, location = in memory)
 
-julia> margin_get()
+julia> LIMITING_WIDTH[], LIMITING_HEIGHT[] # 'paper space' dimensions, outside
+(800, 800)
+
+julia> margin_get()  # 'paper space' margins, subtracted from outside
 Margin(t = 24, b = 24, l = 32, r = 32)
 
 julia> inkextent_user_with_margin()
- ⤡ Point(-400.0, -352.0) : Point(400.0, 352.0)
+ ⤡ Point(-400.0, -400.0) : Point(400.0, 400.0)
 
 julia> inkextent_user_get()
  ⤡ Point(-368.0, -376.0) : Point(368.0, 376.0)
@@ -192,7 +200,7 @@ julia> snap()
 
 File '1.svg' is 800x800 points, '1.png' is 800x800 pixels. The transparent background is shown differently depending on where you display the file.
 
-If you draw outside of `⤡ Point(-368.0, -376.0) : Point(368.0, 376.0)`, call `encompass` with the new point and ink extents will increase. Output through `snap` remain 800x800.
+If you draw outside of default ink extents, `⤡ Point(-368.0, -376.0) : Point(368.0, 376.0)`, call `encompass` with the new point and ink extents will increase. Output through `snap` remain 800x800, but `scale_limting_get` will decrease.
 
 See the examples:
 
@@ -207,7 +215,7 @@ Model spaces smaller than 736 x 752 distance units need to reduce the default in
 
 ```
 julia> inkextent_set(BoundingBox(O, O + (50, 50)))
- ⤡ Point(-10.0, -10.0) : Point(10.0, 10.0)
+ ⤡ Point(0.0, 0.0) : Point(50.0, 50.0)
 
 julia> snap()
 ```

@@ -2,7 +2,7 @@ module LuxorLayout
 import ThreadPools, Luxor, Cairo
 using ThreadPools: @tspawnat
 using Luxor: BoundingBox, Point, @layer, Drawing, O, snapshot
-using Luxor: origin, finish, currentdrawing
+using Luxor: origin, finish, currentdrawing, midpoint
 using Luxor: setopacity, sethue, setcolor, setfont, settext
 using Luxor: setline, setdash, setlinecap
 using Luxor: circle, line, label, box
@@ -12,6 +12,7 @@ import Base: *, show
 
 # 1. Margins and limiting width or height
 export margin_get, margin_set, Margin, scale_limiting_get
+export LIMITING_WIDTH, LIMITING_HEIGHT
 
 # 2. Inkextent
 export encompass, inkextent_user_with_margin, inkextent_reset, inkextent_set
@@ -19,7 +20,7 @@ export inkextent_user_get, inkextent_device_get
 export point_device_get, point_user_get
 
 # 3. Overlay file
-export text_on_overlay
+export text_on_overlay, user_origin_in_overlay_space_get
 
 # 4. Snap
 export snap, countimage_setvalue
@@ -32,7 +33,7 @@ export rotation_device_get, distance_to_device_origin_get
 # 1 Margins and limiting width or height
 #
 # margin_get, margin_set, Margin,
-# scale_limiting_get,
+# scale_limiting_get, 
 # LIMITING_WIDTH[], LIMITING_HEIGHT[]
 ########################################
 
@@ -105,7 +106,6 @@ function scale_limiting_get()
     sh = dh / uh
     min(sw, sh)
 end
-
 
 #########################################
 # 2 Inkextent
@@ -204,9 +204,9 @@ function inkextent_user_with_margin()
     s = scale_limiting_get()
     ma = margin_get()
     sm = [ma.t, ma.b, ma.l, ma.r] .* (1 / s)
-    tl = ie.corner1 - (sm[3], sm[1])
-    br = ie.corner2 + (sm[4], sm[2])
-    BoundingBox(tl, br)
+    bl = ie.corner1 - (sm[3], sm[2])
+    tr = ie.corner2 + (sm[4], sm[1])
+    BoundingBox(bl, tr)
 end
 
 """
@@ -284,6 +284,85 @@ end
 #   assert_file_exists
 ##################################
 const LIMIT_fsize_read_svg = 13705152
+
+"""
+    text_on_overlay(txt;
+                    color ="black",
+                    fs = 24,
+                    family= "Sans",
+                    lineheightfac = 1.3, # used to be 7 / 6. Complicated!
+                    margleftfrac = 0.05,
+                    margtopfrac = 0.05
+                    )
+
+Multi-line "Pro-API" text placed at upper left.
+Newline character is converted to carriage return.
+
+Overlay coordinates and scale differ from user space,
+and font configuration is independent.
+Tweaking is possible through keyword arguments, but
+writing your own version may be easier.
+
+Overlay is at center of the overlay with margins
+
+"""
+function text_on_overlay(txt;
+                        color ="black",
+                        fs = 24,
+                        family= "Sans",
+                        lineheightfac = 1.3, # used to be 7 / 6. Complicated!
+                        margleftfrac = margin_get().l / LIMITING_WIDTH[],
+                        margtopfrac = margin_get().t / LIMITING_WIDTH[]
+                        )
+    setcolor(color)
+    setfont(family, fs)
+    w = currentdrawing().width
+    h = currentdrawing().height
+    ctext = replace(txt, "\n" => "\r")
+    lins = countlines(IOBuffer(ctext); eol = '\r')
+    x = (-0.5 + margleftfrac)w
+    y = (-0.5 + margtopfrac)h
+    em = fs * lineheightfac
+    tl = O + (x, y + em * lins)
+    settext(ctext, tl; markup=true)
+end
+
+"""
+    user_origin_in_overlay_space_get()
+    ---> Point
+
+When drawing on an overlay, the origin is at the centre of the 
+output file (you may think of it as the paper page). This returns
+the 'user space' orgin in the overlay's coordinates.
+
+Combine with 'scale_limiting_get' (and possibly rotation_device_get) 
+for pointing at user space points from paper space.
+
+Paper space's maximum width and height is affected by 
+LIMITING_HEIGHT, LIMITING_WIDTH, ink extents and the margins.
+
+# Example
+
+```
+julia> using LuxorLayout, Luxor
+
+julia> Drawing(NaN, NaN, :rec)
+ Luxor drawing: (type = :rec, width = NaN, height = NaN, location = in memory)
+
+
+julia> user_origin_in_overlay_space_get()
+Point(-0.0, -0.0)
+```
+
+Also see 'test_snap' for more examples.
+"""
+function user_origin_in_overlay_space_get()
+    model_to_paper_scale = scale_limiting_get()
+    model_bb_with_margins = inkextent_user_with_margin()
+    O_paper_in_model_space = midpoint(model_bb_with_margins)
+    -O_paper_in_model_space * model_to_paper_scale
+end
+
 """
     overlay_file(filename, txt)
     overlay_file(f_overlay::Function, filename::String)
@@ -530,47 +609,6 @@ snap(txt::String) = snap() do
 end
 snap() = snap( () -> nothing, inkextent_user_with_margin(), scale_limiting_get())
 
-"""
-    text_on_overlay(txt;
-                    color ="black",
-                    fs = 24,
-                    family= "Sans",
-                    lineheightfac = 1.3, # used to be 7 / 6. Complicated!
-                    margleftfrac = 0.05,
-                    margtopfrac = 0.05
-                    )
-
-Multi-line "Pro-API" text placed at upper left.
-Newline character is converted to carriage return.
-
-Overlay coordinates and scale differ from user space,
-and font configuration is independent.
-Tweaking is possible through keyword arguments, but
-writing your own version may be easier.
-
-Overlay is at center of the overlay with margins
-
-"""
-function text_on_overlay(txt;
-                        color ="black",
-                        fs = 24,
-                        family= "Sans",
-                        lineheightfac = 1.3, # used to be 7 / 6. Complicated!
-                        margleftfrac = margin_get().l / LIMITING_WIDTH[],
-                        margtopfrac = margin_get().t / LIMITING_WIDTH[]
-                        )
-    setcolor(color)
-    setfont(family, fs)
-    w = currentdrawing().width
-    h = currentdrawing().height
-    ctext = replace(txt, "\n" => "\r")
-    lins = countlines(IOBuffer(ctext); eol = '\r')
-    x = (-0.5 + margleftfrac)w
-    y = (-0.5 + margtopfrac)h
-    em = fs * lineheightfac
-    tl = O + (x, y + em * lins)
-    settext(ctext, tl; markup=true)
-end
 
 
 ##########################################
@@ -648,6 +686,8 @@ function rotation_device_get()
     @assert hypot(y, x) == 1
     atan(y, x)
 end
+
+
 
 end # module
 nothing

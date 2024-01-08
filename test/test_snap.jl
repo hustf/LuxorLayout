@@ -1,10 +1,12 @@
 using Test
 using LuxorLayout
+#using LuxorLayout: scale_limiting_get, LIMITING_WIDTH, LIMITING_HEIGHT,
+#    margin_set, origin, BoundingBox, user_origin_in_overlay_space_get, finish, 
+#    
 import Luxor
-using Luxor: Drawing, Point, background, sethue
-using Luxor: O, brush, translate, rotate
-using Luxor: midpoint, snapshot
-using LuxorLayout: scale_limiting_get
+using Luxor: Drawing, Point, background, sethue, @layer
+using Luxor: O, brush, translate, rotate, origin, finish
+using Luxor: midpoint, snapshot, BoundingBox, boxwidth, boxheight
 
 # We have some other images we won't write over. Start after:
 countimage_setvalue(19)
@@ -47,7 +49,7 @@ end
         # The origin of output in user coordinates (assuming default, symmetric margins)
         pto = midpoint(cb)
         mark_cs(roundpt(pto), labl = "pto", dir =:SE, color = "indigo", r = 60)
-        # The current user origin in output coordinates
+        # The current user origin in overlay / output / paper space coordinates
         pt = (O - pto) * outscale
         snapshot(;cb, scalefactor = outscale) # No overlay, no file output
         snap("""
@@ -106,3 +108,80 @@ end
         snap(t_overlay, cb, outscale; pt)
     end
 end
+
+@testset "user_origin_in_overlay_space_get() - no file output" begin
+
+    @testset " -- no margins or rotation" begin
+        Drawing(NaN, NaN, :rec)
+        origin()
+        margin_set(Margin(0,0,0,0))
+        #
+        LIMITING_WIDTH[] = 200
+        LIMITING_HEIGHT[] = 200
+        inkextent_set(BoundingBox(O + (-100, -100), O + (100, 100)))
+        @test scale_limiting_get() == 1
+        @test boxwidth(inkextent_user_with_margin()) == 200
+        @test boxheight(inkextent_user_with_margin()) == 200
+        @test user_origin_in_overlay_space_get() == O
+        #
+        inkextent_set(BoundingBox(O + (-200, -200), O + (200, 200)))
+        @test scale_limiting_get() == 0.5
+        @test boxwidth(inkextent_user_with_margin()) == 400
+        @test boxheight(inkextent_user_with_margin()) == 400
+        @test user_origin_in_overlay_space_get() == O
+        #
+        LIMITING_WIDTH[] = 300
+        LIMITING_HEIGHT[] = 300
+        inkextent_set(BoundingBox(O + (-200, -200), O + (100, 100)))
+        @test scale_limiting_get() == 1
+        @test boxwidth(inkextent_user_with_margin()) == 300
+        @test boxheight(inkextent_user_with_margin()) == 300
+        @test user_origin_in_overlay_space_get() == O + (50, 50)
+        #
+        inkextent_set(BoundingBox(O + (-2000, -2000), O + (1000, 1000)))
+        @test scale_limiting_get() == 0.1
+        @test boxwidth(inkextent_user_with_margin()) == 3000
+        @test boxheight(inkextent_user_with_margin()) == 3000
+        @test user_origin_in_overlay_space_get() == O + (50, 50)
+        #
+        finish()
+    end
+    @testset " -- margins bottom left no rotation" begin
+        Drawing(NaN, NaN, :rec)
+        origin()
+        margin_set(Margin(0, 200, 200,0))
+        #
+        LIMITING_WIDTH[] = 400
+        LIMITING_HEIGHT[] = 400
+        inkextent_set(BoundingBox(O + (-100, -100), O + (100, 100)))
+        @test scale_limiting_get() == 1
+        @test boxwidth(inkextent_user_with_margin()) == 200 + 200
+        @test boxheight(inkextent_user_with_margin()) == 200 + 200
+        @test user_origin_in_overlay_space_get() == O + (100, 100)
+        #
+        inkextent_set(BoundingBox(O + (-200, -200), O + (200, 200)))
+        @test scale_limiting_get() == 0.5
+        @test boxwidth(inkextent_user_with_margin()) == 400 + 200/ 0.5
+        @test boxheight(inkextent_user_with_margin()) == 400 + 200 / 0.5
+        @test user_origin_in_overlay_space_get() == O + (100, 100)
+        #
+        LIMITING_WIDTH[] = 500
+        LIMITING_HEIGHT[] = 500
+        inkextent_set(BoundingBox(O + (-200, -200), O + (100, 100)))
+        @test scale_limiting_get() == (500 - 200) / 300
+        @test boxwidth(inkextent_user_with_margin()) == 300 + 200
+        @test boxheight(inkextent_user_with_margin()) == 300 + 200
+        @test user_origin_in_overlay_space_get() == O + (150, 150)
+        #
+        inkextent_set(BoundingBox(O + (-2000, -2000), O + (1000, 1000)))
+        @test scale_limiting_get() == (500 - 200) / 3000
+        @test boxwidth(inkextent_user_with_margin()) == 3000 + 2000
+        @test boxheight(inkextent_user_with_margin()) == 3000 + 2000
+        @test user_origin_in_overlay_space_get() == O + (150, 150)
+        #
+        finish()
+    end
+end
+# Cleanup
+LIMITING_HEIGHT[] = 800
+LIMITING_WIDTH[] = 800
