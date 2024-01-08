@@ -19,8 +19,8 @@ function run_all_tests()
     end
 end
 
-# This is copied directly from Luxor.
-if get(ENV, "LUXOR_KEEP_TEST_RESULTS", false) == "true"
+# This is copied almost directly from Luxor.jl.
+if get(ENV, "LUXORLAYOUT_KEEP_TEST_RESULTS", false) == "true"
     cd(mktempdir(cleanup=false))
     @info("...Keeping the results in: $(pwd())")
     run_all_tests()
@@ -30,11 +30,11 @@ mktempdir() do tmpdir
     cd(tmpdir) do
         msg = """Running tests in: $(pwd())
         but not keeping the results
-        because you didn't do: ENV[\"LUXOR_KEEP_TEST_RESULTS\"] = \"true\""""
+        because you didn't do: ENV[\"LUXORLAYOUT_KEEP_TEST_RESULTS\"] = \"true\""""
         @info msg
         run_all_tests()
         @info("Test images weren't saved. To see the test images, next time do this before running:")
-        @info(" ENV[\"LUXOR_KEEP_TEST_RESULTS\"] = \"true\"")
+        @info(" ENV[\"LUXORLAYOUT_KEEP_TEST_RESULTS\"] = \"true\"")
     end
 end
 end

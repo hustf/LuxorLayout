@@ -1,7 +1,7 @@
 name = "LuxorLayout"
 uuid = "909dfbbc-cb73-418e-9556-eed3773b40ca"
 authors = ["hustf <hustf@users.noreply.github.com> and contributors"]
-version = "0.0.10"
+version = "0.0.11"
 
 [deps]
 Cairo = "159f3aea-2a34-519c-b102-8c37f9878175"

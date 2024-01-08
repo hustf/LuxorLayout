@@ -4,7 +4,7 @@ import Luxor
 using Luxor: Drawing, Point, background, sethue
 using Luxor: O, brush, translate, rotate
 using Luxor: midpoint, snapshot
-using LuxorLayout: scale_limiting_get # Consider: do we have something more useful in public api?
+using LuxorLayout: scale_limiting_get
 
 # We have some other images we won't write over. Start after:
 countimage_setvalue(19)
@@ -14,11 +14,15 @@ roundpt(pt) = Point(round(pt.x), round(pt.y))
 
 "An overlay showing coordinate systems: user, device, output"
 function t_overlay(; pt)
+    # In the overlay context, the device origin is the 
+    # centre of the canvas.
     # The origin here, o4, overlaps o1.
     mark_cs(O; labl = "o4", color = "black", r = 70, dir=:SW)
     mark_cs(roundpt(pt); labl = "pt4", color = "white", r = 80, dir=:SE)
-    translate(pt)
-    mark_cs(O; labl = "o5", color = "navy", r = 90, dir=:E)
+    @layer begin
+        translate(pt)
+        mark_cs(O; labl = "o5", color = "navy", r = 90, dir=:E)
+    end
 end
 
 @testset "Target a user space point in an overlay. Pic. 20-22" begin
@@ -40,7 +44,7 @@ end
         @test point_device_get(O) == p
         outscale = scale_limiting_get()
         cb = inkextent_user_with_margin()
-        # The origin of output in user coordinates:
+        # The origin of output in user coordinates (assuming default, symmetric margins)
         pto = midpoint(cb)
         mark_cs(roundpt(pto), labl = "pto", dir =:SE, color = "indigo", r = 60)
         # The current user origin in output coordinates
@@ -61,7 +65,7 @@ end
             1) We need to find
             the mapping from
             <i>user</i> space to
-            <i>overlay</i> space
+            <i>overlay</i> (also paper) space.
 
             2) Pass that info to the overlay function.
 

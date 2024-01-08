@@ -86,30 +86,26 @@ const LIMITING_WIDTH::Ref{Int64} = 800
 const LIMITING_HEIGHT::Ref{Int64} = 800
 
 """
-    scale_limiting_get(;s0 = 1)
+    scale_limiting_get()
     -> ::Float64
 
 Scaling factor from user space to output.
-This recursive function finds the scaling factor
-which fits the ink extents plus outside margins into
-LIMITING_WIDTH[], LIMITING_HEIGHT[].
+This finds the scaling factor `user_to_overlay`
+which fits the ink extents into the overlay's
+LIMITING_WIDTH[], LIMITING_HEIGHT[] minus margins.
 """
-function scale_limiting_get(;s0 = 1)
+function scale_limiting_get() 
     m = margin_get()
-    dw = LIMITING_WIDTH[]
-    dh = LIMITING_HEIGHT[]
+    dw = LIMITING_WIDTH[] - m.l - m.r
+    dh = LIMITING_HEIGHT[] - m.t - m.b
     iu = inkextent_user_get()
-    uw = boxwidth(iu) + (m.l + m.r) / s0
-    uh = boxheight(iu) + (m.t + m.b) / s0
+    uw = boxwidth(iu)
+    uh = boxheight(iu)
     sw = dw / uw
     sh = dh / uh
-    s = min(sw, sh)
-    if abs((s / s0) - 1 ) > 0.00001
-        # Recursion here
-        s = scale_limiting_get(;s0 = s)
-    end
-    s
+    min(sw, sh)
 end
+
 
 #########################################
 # 2 Inkextent
@@ -206,9 +202,10 @@ mapped to the user / current coordinate system.
 function inkextent_user_with_margin()
     ie = inkextent_user_get()
     s = scale_limiting_get()
-    sm = margin_get() * (1 / s)
-    tl = ie.corner1 + (-sm.l, -sm.t)
-    br = ie.corner2 + (sm.r, sm.b)
+    ma = margin_get()
+    sm = [ma.t, ma.b, ma.l, ma.r] .* (1 / s)
+    tl = ie.corner1 - (sm[3], sm[1])
+    br = ie.corner2 + (sm[4], sm[2])
     BoundingBox(tl, br)
 end
 
@@ -348,7 +345,7 @@ function overlay_file(f_overlay::Function, filename::String; fkwds...)
     Drawing(rimg.width, rimg.height, filename)
     placeimage(rimg)
     @layer begin
-        # Place origin at centre
+        # Place origin at centre. Note, we're ignoring margins here.
         origin()
         # Call user overlay function
         if isempty(fkwds)
@@ -525,7 +522,7 @@ function snap(f_overlay::Function, cb::BoundingBox, scalefactor::Float64; fkwds.
     res
 end
 function snap(f_overlay::Function; fkwds...)
-    outscale = scale_limiting_get(;s0 = 1)
+    outscale = scale_limiting_get()
     snap(f_overlay, inkextent_user_with_margin(), outscale; fkwds...)
 end
 snap(txt::String) = snap() do
@@ -548,16 +545,19 @@ Newline character is converted to carriage return.
 
 Overlay coordinates and scale differ from user space,
 and font configuration is independent.
-Tweaking through keyword arguments, but
+Tweaking is possible through keyword arguments, but
 writing your own version may be easier.
+
+Overlay is at center of the overlay with margins
+
 """
 function text_on_overlay(txt;
                         color ="black",
                         fs = 24,
                         family= "Sans",
                         lineheightfac = 1.3, # used to be 7 / 6. Complicated!
-                        margleftfrac = 0.05,
-                        margtopfrac = 0.05
+                        margleftfrac = margin_get().l / LIMITING_WIDTH[],
+                        margtopfrac = margin_get().t / LIMITING_WIDTH[]
                         )
     setcolor(color)
     setfont(family, fs)

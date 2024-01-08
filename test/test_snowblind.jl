@@ -83,7 +83,7 @@ p, θₑ = trail_next_length(150, 0, 0, 0)
 translate(p)
 rotate(-θₑ)
 outscale = scale_limiting_get()
-@assert outscale ≈ 1.3381816995488864 "Expected outscale  ≈ 1.3381816995488864, got $outscale"
+@assert outscale ≈ 1.3381818181818181 "Expected outscale  ≈ 1.3381818181818181, got $outscale"
 cb = inkextent_user_with_margin()
 # The origin of output in user coordinates:
 pto = midpoint(cb)
