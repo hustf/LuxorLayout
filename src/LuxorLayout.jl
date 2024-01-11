@@ -11,7 +11,7 @@ using Luxor: boxwidth, boxheight, readsvg, placeimage, readpng
 import Base: *, show
 
 # 1. Margins and limiting width or height
-export margin_get, margin_set, Margin, scale_limiting_get
+export margin_get, margin_set, Margin, factor_user_to_overlay_get
 export LIMITING_WIDTH, LIMITING_HEIGHT
 
 # 2. Inkextent
@@ -33,7 +33,7 @@ export rotation_device_get, distance_to_device_origin_get
 # 1 Margins and limiting width or height
 #
 # margin_get, margin_set, Margin,
-# scale_limiting_get, 
+# factor_user_to_overlay_get, 
 # LIMITING_WIDTH[], LIMITING_HEIGHT[]
 ########################################
 
@@ -87,7 +87,7 @@ const LIMITING_WIDTH::Ref{Int64} = 800
 const LIMITING_HEIGHT::Ref{Int64} = 800
 
 """
-    scale_limiting_get()
+    factor_user_to_overlay_get()
     -> ::Float64
 
 Scaling factor from user space to output.
@@ -95,7 +95,7 @@ This finds the scaling factor `user_to_overlay`
 which fits the ink extents into the overlay's
 LIMITING_WIDTH[], LIMITING_HEIGHT[] minus margins.
 """
-function scale_limiting_get() 
+function factor_user_to_overlay_get() 
     m = margin_get()
     dw = LIMITING_WIDTH[] - m.l - m.r
     dh = LIMITING_HEIGHT[] - m.t - m.b
@@ -201,7 +201,7 @@ mapped to the user / current coordinate system.
 """
 function inkextent_user_with_margin()
     ie = inkextent_user_get()
-    s = scale_limiting_get()
+    s = factor_user_to_overlay_get()
     ma = margin_get()
     sm = [ma.t, ma.b, ma.l, ma.r] .* (1 / s)
     bl = ie.corner1 - (sm[3], sm[2])
@@ -335,7 +335,7 @@ When drawing on an overlay, the origin is at the centre of the
 output file (you may think of it as the paper page). This returns
 the 'user space' orgin in the overlay's coordinates.
 
-Combine with 'scale_limiting_get' (and possibly rotation_device_get) 
+Combine with 'factor_user_to_overlay_get' (and possibly rotation_device_get) 
 for pointing at user space points from paper space.
 
 Paper space's maximum width and height is affected by 
@@ -357,7 +357,7 @@ Point(-0.0, -0.0)
 Also see 'test_snap' for more examples.
 """
 function user_origin_in_overlay_space_get()
-    model_to_paper_scale = scale_limiting_get()
+    model_to_paper_scale = factor_user_to_overlay_get()
     model_bb_with_margins = inkextent_user_with_margin()
     O_paper_in_model_space = midpoint(model_bb_with_margins)
     -O_paper_in_model_space * model_to_paper_scale
@@ -601,13 +601,13 @@ function snap(f_overlay::Function, cb::BoundingBox, scalefactor::Float64; fkwds.
     res
 end
 function snap(f_overlay::Function; fkwds...)
-    outscale = scale_limiting_get()
+    outscale = factor_user_to_overlay_get()
     snap(f_overlay, inkextent_user_with_margin(), outscale; fkwds...)
 end
 snap(txt::String) = snap() do
     text_on_overlay(txt)
 end
-snap() = snap( () -> nothing, inkextent_user_with_margin(), scale_limiting_get())
+snap() = snap( () -> nothing, inkextent_user_with_margin(), factor_user_to_overlay_get())
 
 
 
@@ -633,7 +633,7 @@ Outlines inkextent_user_get(). For visual debugging"
 """
 function mark_inkextent()
     bb = inkextent_user_get()
-    lwi = max(1, 4 / scale_limiting_get())
+    lwi = max(1, 4 / factor_user_to_overlay_get())
     @layer begin
         sethue("brown")
         setline(lwi)

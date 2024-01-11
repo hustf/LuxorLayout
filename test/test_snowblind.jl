@@ -6,7 +6,7 @@ using QuadGK
 using LuxorLayout
 using LuxorLayout: inkextent_set
 using LuxorLayout: LIMITING_WIDTH, LIMITING_HEIGHT
-using LuxorLayout: scale_limiting_get, margin_get
+using LuxorLayout: factor_user_to_overlay_get, margin_get
 import Luxor
 using Luxor: Drawing, O, BoundingBox, Point, snapshot
 using Luxor: Path, PathClose, _get_current_cr, @layer
@@ -73,7 +73,7 @@ inkextent_reset()
     end
 end
 
-@test scale_limiting_get() == 1.0
+@test factor_user_to_overlay_get() == 1.0
 background("snow1")
 # In this first image, we're going to zoom in.
 # The default ink_extent is too large.
@@ -82,7 +82,7 @@ inkextent_set(BoundingBox(Point(-190, -170), Point(360, 50)))
 p, θₑ = trail_next_length(150, 0, 0, 0)
 translate(p)
 rotate(-θₑ)
-outscale = scale_limiting_get()
+outscale = factor_user_to_overlay_get()
 @assert outscale ≈ 1.3381818181818181 "Expected outscale  ≈ 1.3381818181818181, got $outscale"
 cb = inkextent_user_with_margin()
 # The origin of output in user coordinates:
@@ -145,7 +145,7 @@ translate(p)
 rotate(-θₑ)
 # Increase default margin, lest the skis poke out
 margin_set(;r = 200)
-outscale = scale_limiting_get()
+outscale = factor_user_to_overlay_get()
 cb = inkextent_user_with_margin()
 pt = (O - midpoint(cb)) * outscale
 mark_inkextent()
@@ -168,7 +168,7 @@ inkextent_reset() # Back to scale 1:1 for 800x800 pixels
 p, θₑ = trail_next_length(6000, 0, θ´max, 0)
 translate(p)
 rotate(-θₑ)
-outscale = scale_limiting_get()
+outscale = factor_user_to_overlay_get()
 cb = inkextent_user_with_margin()
 pt = (O - midpoint(cb)) * outscale
 mark_inkextent()
@@ -198,7 +198,7 @@ angvel = randn(200) * θ´max / 2.25
 for a in angvel
     trail_next_length(1000, 0, a, 0)
 end
-outscale = scale_limiting_get()
+outscale = factor_user_to_overlay_get()
 cb = inkextent_user_with_margin()
 pt = (O - midpoint(cb)) * outscale
 mark_inkextent()
@@ -229,7 +229,7 @@ angacc = randn(50) * θ´max / (2.25 * 100^2)
 for (a, acc) in zip(angvel, angacc)
     trail_next_length(10000, 0, a, acc)
 end
-outscale = scale_limiting_get()
+outscale = factor_user_to_overlay_get()
 cb = inkextent_user_with_margin()
 pt = (O - midpoint(cb)) * outscale
 mark_inkextent()
@@ -249,7 +249,7 @@ function randomstep()
     p, θₑ = trail_next_length(5300, angle, angvel, angacc)
     translate(p)
     rotate(-θₑ)
-    outscale = scale_limiting_get()
+    outscale = factor_user_to_overlay_get()
     cb = inkextent_user_with_margin()
     pt = (O - midpoint(cb)) * outscale
     cb, outscale, pt

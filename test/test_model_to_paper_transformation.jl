@@ -56,15 +56,15 @@ end
 # points should overlap.
 draw_P_in_new_model()
 snap(mark_P_from_overlay; 
-    scale_model_to_paper = scale_limiting_get(),
-    O_model = (O - midpoint(inkextent_user_with_margin())) * scale_limiting_get())
+    scale_model_to_paper = factor_user_to_overlay_get(),
+    O_model = (O - midpoint(inkextent_user_with_margin())) * factor_user_to_overlay_get())
 
 # Extend the model canvas to the right and down (+y).
 # Now there is a small scaling and a transformation. 
 P .*= 4
 draw_P_in_new_model()
 snap(mark_P_from_overlay; 
-    scale_model_to_paper = scale_limiting_get(),
-    O_model = (O - midpoint(inkextent_user_with_margin())) * scale_limiting_get())
+    scale_model_to_paper = factor_user_to_overlay_get(),
+    O_model = (O - midpoint(inkextent_user_with_margin())) * factor_user_to_overlay_get())
 @test true
 

@@ -76,7 +76,7 @@ See inline documentation for more.
     * margin_get
     * margin_set
     * Margin
-    * scale_limiting_get
+    * factor_user_to_overlay_get
     * LIMITING_WIDTH
     * LIMITING_HEIGHT
 
@@ -125,7 +125,7 @@ See inline documentation for more.
  1. Margins and limiting width or height
 
     margin_get, margin_set, Margin, 
-    scale_limiting_get,
+    factor_user_to_overlay_get,
     LIMITING_WIDTH[], LIMITING_HEIGHT[]
 
  2. Inkextent
@@ -187,7 +187,7 @@ julia> inkextent_user_with_margin()
 julia> inkextent_user_get()
  ⤡ Point(-368.0, -376.0) : Point(368.0, 376.0)
 
-julia> LuxorLayout.scale_limiting_get()
+julia> LuxorLayout.factor_user_to_overlay_get()
 1.0
 
 julia> mark_cs(O);mark_inkextent()

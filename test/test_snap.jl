@@ -1,6 +1,6 @@
 using Test
 using LuxorLayout
-#using LuxorLayout: scale_limiting_get, LIMITING_WIDTH, LIMITING_HEIGHT,
+#using LuxorLayout: factor_user_to_overlay_get, LIMITING_WIDTH, LIMITING_HEIGHT,
 #    margin_set, origin, BoundingBox, user_origin_in_overlay_space_get, finish, 
 #    
 import Luxor
@@ -44,7 +44,7 @@ end
         rotate(-θ)
         mark_cs(O, labl = "o3", dir =:NW, color = "yellow", r = 50)
         @test point_device_get(O) == p
-        outscale = scale_limiting_get()
+        outscale = factor_user_to_overlay_get()
         cb = inkextent_user_with_margin()
         # The origin of output in user coordinates (assuming default, symmetric margins)
         pto = midpoint(cb)
@@ -97,7 +97,7 @@ end
         @test rotation_device_get() ≈ -θ
         mark_cs(O, labl = "o3", dir =:NW, color = "yellow", r = 50)
         @test point_device_get(O) == p
-        outscale = scale_limiting_get()
+        outscale = factor_user_to_overlay_get()
         cb = inkextent_user_with_margin()
         # The origin of output in user coordinates:
         pto = midpoint(cb)
@@ -119,13 +119,13 @@ end
         LIMITING_WIDTH[] = 200
         LIMITING_HEIGHT[] = 200
         inkextent_set(BoundingBox(O + (-100, -100), O + (100, 100)))
-        @test scale_limiting_get() == 1
+        @test factor_user_to_overlay_get() == 1
         @test boxwidth(inkextent_user_with_margin()) == 200
         @test boxheight(inkextent_user_with_margin()) == 200
         @test user_origin_in_overlay_space_get() == O
         #
         inkextent_set(BoundingBox(O + (-200, -200), O + (200, 200)))
-        @test scale_limiting_get() == 0.5
+        @test factor_user_to_overlay_get() == 0.5
         @test boxwidth(inkextent_user_with_margin()) == 400
         @test boxheight(inkextent_user_with_margin()) == 400
         @test user_origin_in_overlay_space_get() == O
@@ -133,13 +133,13 @@ end
         LIMITING_WIDTH[] = 300
         LIMITING_HEIGHT[] = 300
         inkextent_set(BoundingBox(O + (-200, -200), O + (100, 100)))
-        @test scale_limiting_get() == 1
+        @test factor_user_to_overlay_get() == 1
         @test boxwidth(inkextent_user_with_margin()) == 300
         @test boxheight(inkextent_user_with_margin()) == 300
         @test user_origin_in_overlay_space_get() == O + (50, 50)
         #
         inkextent_set(BoundingBox(O + (-2000, -2000), O + (1000, 1000)))
-        @test scale_limiting_get() == 0.1
+        @test factor_user_to_overlay_get() == 0.1
         @test boxwidth(inkextent_user_with_margin()) == 3000
         @test boxheight(inkextent_user_with_margin()) == 3000
         @test user_origin_in_overlay_space_get() == O + (50, 50)
@@ -154,13 +154,13 @@ end
         LIMITING_WIDTH[] = 400
         LIMITING_HEIGHT[] = 400
         inkextent_set(BoundingBox(O + (-100, -100), O + (100, 100)))
-        @test scale_limiting_get() == 1
+        @test factor_user_to_overlay_get() == 1
         @test boxwidth(inkextent_user_with_margin()) == 200 + 200
         @test boxheight(inkextent_user_with_margin()) == 200 + 200
         @test user_origin_in_overlay_space_get() == O + (100, 100)
         #
         inkextent_set(BoundingBox(O + (-200, -200), O + (200, 200)))
-        @test scale_limiting_get() == 0.5
+        @test factor_user_to_overlay_get() == 0.5
         @test boxwidth(inkextent_user_with_margin()) == 400 + 200/ 0.5
         @test boxheight(inkextent_user_with_margin()) == 400 + 200 / 0.5
         @test user_origin_in_overlay_space_get() == O + (100, 100)
@@ -168,13 +168,13 @@ end
         LIMITING_WIDTH[] = 500
         LIMITING_HEIGHT[] = 500
         inkextent_set(BoundingBox(O + (-200, -200), O + (100, 100)))
-        @test scale_limiting_get() == (500 - 200) / 300
+        @test factor_user_to_overlay_get() == (500 - 200) / 300
         @test boxwidth(inkextent_user_with_margin()) == 300 + 200
         @test boxheight(inkextent_user_with_margin()) == 300 + 200
         @test user_origin_in_overlay_space_get() == O + (150, 150)
         #
         inkextent_set(BoundingBox(O + (-2000, -2000), O + (1000, 1000)))
-        @test scale_limiting_get() == (500 - 200) / 3000
+        @test factor_user_to_overlay_get() == (500 - 200) / 3000
         @test boxwidth(inkextent_user_with_margin()) == 3000 + 2000
         @test boxheight(inkextent_user_with_margin()) == 3000 + 2000
         @test user_origin_in_overlay_space_get() == O + (150, 150)

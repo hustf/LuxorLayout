@@ -18,7 +18,7 @@ origin()
     m = margin_set(Margin())
     t1, b1, l1, r1 = m.t, m.b, m.l, m.r
     inkextent_reset()
-    s1 = scale_limiting_get()
+    s1 = factor_user_to_overlay_get()
     @test s1 == 1
     mark_inkextent()
     # Add a background with transparency - the old inkextent
@@ -35,9 +35,9 @@ origin()
     #   800 x   800 
     #   800 x <=800
     # <=800 x   800
-    # scale_limiting_get() returns the scaling to fit within margins.
+    # factor_user_to_overlay_get() returns the scaling to fit within margins.
     bb2 = inkextent_user_get()
-    s2 = scale_limiting_get() 
+    s2 = factor_user_to_overlay_get() 
     # svg file + png file + png in memory.
     pic2 = snap()           #51
     @test pic2.width == 415
@@ -46,7 +46,7 @@ origin()
     # (the output image will grow wider, not taller. Scale is unchanged since height limits)
     margin_set(;l = 32 + 100)
     bb3 = inkextent_user_get()
-    s3 = scale_limiting_get() 
+    s3 = factor_user_to_overlay_get() 
     @test boxwidth(bb2) == boxwidth(bb3)
     # In this case, the necessary scaling was unchanged,
     # as the height of inkextent, top and bottom margin
@@ -64,7 +64,7 @@ origin()
     @test boxheight(bb3) == 1576
     setcolor("darkblue")
     mark_inkextent()
-    s4 = scale_limiting_get()
+    s4 = factor_user_to_overlay_get()
     @test s4 < s3
     pic3 = snap() # 52 svg file + png file + png in memory
     @test pic3.height < 800
@@ -88,7 +88,7 @@ end
     bbn = inkextent_user_get()
     @test boxwidth(bbn) / boxwidth(bbo) == 2
     @test boxheight(bbo) / boxheight(bbn) == sc
-    @test round(scale_limiting_get(), digits = 5) == sc
+    @test round(factor_user_to_overlay_get(), digits = 5) == sc
 end
 
 @testset "User to device space: Zooming in. Pic. 53-54" begin
@@ -122,7 +122,7 @@ end
     encompass(circle(pt, 50, :stroke))
     dbb = BoundingBox(inkextent_user_get().corner1, pt + (50, 50))
     @test all(inkextent_user_get() .== dbb)
-    @test scale_limiting_get() < sc
+    @test factor_user_to_overlay_get() < sc
     mark_inkextent()
     pic2 = snap("""
         We increased ink extents by (50,50 )
@@ -132,7 +132,7 @@ end
         the same outside dimensions.
 
         The scaling applied internally in 'snap' is:
-            <small>scale_limiting_get()</small> = $(round(scale_limiting_get(), digits=4)).
+            <small>factor_user_to_overlay_get()</small> = $(round(factor_user_to_overlay_get(), digits=4)).
         """)
     # There's a 0 / 1 thing going on with png output. 799 ≈ 800 anyway.
     @test abs(pic2.width - pic1.width) <= 1
@@ -157,7 +157,7 @@ end
     rotate(a)
     # This leads to scaling, which is complicated to foresee because
     # the margins in output are kept the same after scaling.
-    @test round(scale_limiting_get(), digits = 4) == 0.7263
+    @test round(factor_user_to_overlay_get(), digits = 4) == 0.7263
     setopacity(0.3)
     sethue("lightblue")
     # This demonstrates why we must keep track of
@@ -186,7 +186,7 @@ end
 
         A scale mapping is applied during output, to fit ink extents 
         as well as scaled margins within 800x800 points. 
-            <small>scale_limiting_get()</small> = $(round(scale_limiting_get(), digits=3))
+            <small>factor_user_to_overlay_get()</small> = $(round(factor_user_to_overlay_get(), digits=3))
 
         In this case, width limits scaling. Output is 800 x 692.
     """)
@@ -225,7 +225,7 @@ end
     mark_inkextent()
     pic1 = snap("""\r
          <small>snap()</small> outputs 400 x 300. 
-         <small>scale_limiting_get()</small> = $(round(scale_limiting_get(), digits=4)).
+         <small>factor_user_to_overlay_get()</small> = $(round(factor_user_to_overlay_get(), digits=4)).
          svg colors ≠ png colors 
     """)
     @test abs(pic1.width - 400) <= 1
@@ -338,13 +338,13 @@ LIMITING_HEIGHT[] = 800
     @test boxwidth(LuxorLayout.inkextent_default()) == w
     @test boxwidth(inkextent_user_with_margin()) == w
     @test boxheight(inkextent_user_with_margin()) == h
-    @test scale_limiting_get() == 1.0
+    @test factor_user_to_overlay_get() == 1.0
     @test all(inkextent_user_get() .== inkextent_user_with_margin())
     # Activating a Drawing doesn't change things.
     Drawing(NaN, NaN, :rec)
     @test boxwidth(inkextent_user_with_margin()) == w
     @test boxheight(inkextent_user_with_margin()) == h
-    @test scale_limiting_get() == 1.0
+    @test factor_user_to_overlay_get() == 1.0
     @test all(inkextent_user_get() .== inkextent_user_with_margin())
     # Let's draw something
     background("salmon")
@@ -378,12 +378,12 @@ LIMITING_HEIGHT[] = 800
     @test boxwidth(inkextent_user_with_margin()) == w
     @test boxheight(LuxorLayout.inkextent_default()) + m.t + m.b == h
     @test boxheight(inkextent_user_with_margin()) == h
-    @test scale_limiting_get() == 1.0
+    @test factor_user_to_overlay_get() == 1.0
     # Activating a Drawing doesn't change things.
     Drawing(NaN, NaN, :rec)
     @test boxwidth(inkextent_user_with_margin()) == w
     @test boxheight(inkextent_user_with_margin()) == h
-    @test scale_limiting_get() == 1.0
+    @test factor_user_to_overlay_get() == 1.0
     bb = inkextent_user_get()
     wu = boxwidth(bb)
     wh = boxheight(bb)
@@ -400,7 +400,7 @@ LIMITING_HEIGHT[] = 800
     encompass(pttl)
     encompass(ptbr)
     line(pttl, ptbr, :stroke)
-    @test round(scale_limiting_get(); digits = 5) == 0.5
+    @test round(factor_user_to_overlay_get(); digits = 5) == 0.5
     # Let's mark ink extents now... In order to visualize the margins better.
     p1, p2, p3, p4 = LuxorLayout.four_corners(inkextent_user_get())
     line(p1, p2, :stroke)
