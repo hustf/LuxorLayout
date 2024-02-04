@@ -30,7 +30,7 @@ end
 
 
 # We have some other images we won't write over. Start after:
-countimage_setvalue(29) # Check later
+countimage_set(29) # Check later
 
 # This shows well-defined behaviour, as described in Luxor inline docs.
 Drawing(NaN, NaN, :rec)

@@ -8,7 +8,7 @@
 
 using LuxorLayout, Luxor
 # We have some other images we won't write over. Start after:
-countimage_setvalue(19)
+countimage_set(19)
 
 # Imagine this is an array of label coordinates,
 # which may be changing between taking snaps and increasing

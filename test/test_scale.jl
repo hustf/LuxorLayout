@@ -7,7 +7,7 @@ using Luxor: setblend, paint, setcolor, setopacity, sethue
 using Luxor: dimension, text, rect, circle, line, origin
 
 # We have some old images we won't overwrite. Start after:
-countimage_setvalue(49)
+countimage_set(49)
 LIMITING_HEIGHT[] = 800
 LIMITING_WIDTH[] = 800
 origin()

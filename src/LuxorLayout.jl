@@ -23,7 +23,7 @@ export point_device_get, point_user_get
 export text_on_overlay, user_origin_in_overlay_space_get
 
 # 4. Snap
-export snap, countimage_setvalue
+export snap, countimage_set, countimage_get
 
 #5. Utilities for user and debugging
 export mark_inkextent, mark_cs
@@ -402,25 +402,7 @@ function overlay_file(f_overlay::Function, filename::String; fkwds...)
         end
     end
     assert_second_thread()
-    assert_file_exists(filename)
-    if endswith(filename, ".svg")
-        # Reading large svg files sometimes fail.
-        # The error messages user receives can be
-        # misleading, because the parser fails in complicated ways.
-        # The largest file successfully tested was         20 272kB, made with Luxor.
-        # The smallest file with failure we encountered is  9 801kB, made with Inkscape.
-        # Issue warning if length(st) > 13705
-        st = read(filename, String);
-        if length(st) > LIMIT_fsize_read_svg
-            println()
-            @warn "Size of svg  $(byte_description(length(st))) > $(byte_description(LIMIT_fsize_read_svg))"
-        end
-        rimg = readsvg(st)
-    elseif endswith(filename, ".png")
-        rimg = readpng(filename)
-    else
-        throw("Unknown file suffix for overlay: $filename")
-    end
+    rimg = _read_image(filename)
     Drawing(rimg.width, rimg.height, filename)
     placeimage(rimg)
     @layer begin
@@ -446,6 +428,27 @@ function overlay_file(f_overlay::Function, filename::String; fkwds...)
         throw("never happens")
     end
     out
+end
+function _read_image(filename)
+    assert_file_exists(filename)
+    if endswith(uppercase(filename), ".SVG")
+        # Reading large svg files sometimes fail.
+        # The error messages user receives can be
+        # misleading, because the parser fails in complicated ways.
+        # The largest file successfully tested was         20 272kB, made with Luxor.
+        # The smallest file with failure we encountered is  9 801kB, made with Inkscape.
+        # Issue warning if length(st) > 13705
+        st = read(filename, String);
+        if length(st) > LIMIT_fsize_read_svg
+            println()
+            @warn "Size of svg  $(byte_description(length(st))) > $(byte_description(LIMIT_fsize_read_svg))"
+        end
+        rimg = readsvg(st)
+    elseif endswith(uppercase(filename), ".PNG")
+        rimg = readpng(filename)
+    else
+        throw("Unknown file suffix for overlay: $filename")
+    end
 end
 overlay_file(filename, txt) = overlay_file(filename) do
     setcolor("black")
@@ -488,8 +491,8 @@ byte_description(x) = string(Int64(round(x / 1000))) * "kB "
 #     -> png in memory
 #     uses a second thread to add overlays.
 #
-#    snap, countimage, countimage_setvalue,
-#    text_on_overlay
+#    snap, countimage, countimage_set,
+#    countimage_get, text_on_overlay
 #####################################
 const LIMIT_fsize_render_to_png = 5626310
 const LIMIT_pixel_render_to_png  = 32767
@@ -503,7 +506,8 @@ For next value: COUNTIMAGE(). For current value: COUNTIMAGE.value
 mutable struct Countimage;value::Int;end
 (::Countimage)() = COUNTIMAGE.value += 1
 const COUNTIMAGE = Countimage(0)
-countimage_setvalue(n) = COUNTIMAGE.value = n
+countimage_set(n) = COUNTIMAGE.value = n
+countimage_get() = COUNTIMAGE.value
 
 """
     snap()

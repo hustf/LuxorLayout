@@ -22,7 +22,7 @@ LIMITING_HEIGHT[] == 800
 margin_set(Margin(24, 24, 32, 32))
 
 # We have some other images we won't write over. Start after:
-countimage_setvalue(99)
+countimage_set(99)
 
 "A storage for pathified text since font scaling is hard"
 const SKI_DECAL = Ref{Path}(Path([PathClose()]))

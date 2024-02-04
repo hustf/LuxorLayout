@@ -105,7 +105,7 @@ See inline documentation for more.
      Uses a second thread to add overlays
 
     * snap
-    * countimage_setvalue
+    * countimage_set
 
  5. Utilities for user and debugging
 
@@ -153,7 +153,7 @@ See inline documentation for more.
      -> png in memory uses a second thread to add overlays.
 
 ```
-    snap, countimage, countimage_setvalue,
+    snap, countimage, countimage_set,
     text_on_overlay
 ```
 

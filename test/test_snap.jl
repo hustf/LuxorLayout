@@ -9,7 +9,7 @@ using Luxor: O, brush, translate, rotate, origin, finish
 using Luxor: midpoint, snapshot, BoundingBox, boxwidth, boxheight
 
 # We have some other images we won't write over. Start after:
-countimage_setvalue(19)
+countimage_set(19)
 
 "Noone likes decimal points"
 roundpt(pt) = Point(round(pt.x), round(pt.y))
