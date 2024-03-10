@@ -496,7 +496,7 @@ byte_description(x) = string(Int64(round(x / 1000))) * "kB "
 #####################################
 const LIMIT_fsize_render_to_png = 5626310
 const LIMIT_pixel_render_to_png  = 32767
-const LIMIT_pixel_area = 5.7e9
+const LIMIT_pixel_area = 5.5e9
 const LIMIT_pixel_area_soft = 5.293e9
 
 """
